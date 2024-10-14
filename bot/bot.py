@@ -251,7 +251,7 @@ def fetch_emails():
 
     try:
         with conn.cursor() as cursor:
-            query = sql.SQL("SELECT mail FROM mail WHERE mail IS NOT NULL")
+            query = sql.SQL("SELECT address FROM email_addresses WHERE email_addresses IS NOT NULL")
             cursor.execute(query)
             emails = cursor.fetchall()
             
@@ -274,7 +274,7 @@ def fetch_phone_numbers():
 
     try:
         with conn.cursor() as cursor:
-            query = sql.SQL("SELECT phone FROM phone WHERE phone IS NOT NULL")
+            query = sql.SQL("SELECT number FROM phone_numbers WHERE phone_numbers IS NOT NULL")
             cursor.execute(query)
             phone_numbers = cursor.fetchall()
             
@@ -347,7 +347,7 @@ def savePhoneNumbers(phoneNumbers):
     try:
         with conn.cursor() as cursor:
             for phone in phoneNumbers:
-                query = sql.SQL("INSERT INTO phone (phone) VALUES (%s)")
+                query = sql.SQL("INSERT INTO phone_numbers (number) VALUES (%s)")
                 cursor.execute(query, (phone,))
             conn.commit()
         return True
@@ -366,7 +366,7 @@ def saveEmails(emails):
     try:
         with conn.cursor() as cursor:
             for email in emails:
-                query = sql.SQL("INSERT INTO mail (mail) VALUES (%s)")
+                query = sql.SQL("INSERT INTO email_addresses (address) VALUES (%s)")
                 cursor.execute(query, (email,))
             conn.commit()
         return True
