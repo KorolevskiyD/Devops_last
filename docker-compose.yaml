@@ -1,0 +1,76 @@
+version: '3'
+x-postgres-common:
+  &postgres-common
+  user: postgres
+  restart: always
+
+services:
+  bot:
+    image: 192.168.146.184:5000/bot_image
+    container_name: telegram_bot
+#    environment:
+#      - TOKEN=$(TOKEN)
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - bot_network
+
+  db:
+    <<: *postgres-common
+    image: 192.168.146.184:5000/db_image
+    container_name: primary_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=db_pt24
+#      - POSTGRES_HOST_AUTH_METHOD="scram-sha-256\nhost replication all 0.0.0.0/0 trust"
+#      - POSTGRES_INITDB_ARGS="--auth-host=trust"
+    command: |
+      postgres
+      -c wal_level=replica
+      -c hot_standby=on
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c hot_standby_feedback=on
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./00_init.sql:/docker-entrypoint-initdb.d/00_init.sql
+    networks:
+      - bot_network
+    ports:
+      - "5432:5432"
+#    restart: unless-stopped
+
+  db_replica:
+    <<: *postgres-common
+    image: 192.168.146.184:5000/repl_image
+    container_name: replica_db
+    environment:
+      PGUSER: replicator
+      PGPASSWORD: admin123
+    command: |
+      bash -c "
+      rm -rf /var/lib/postgresql/data/back/*
+      until pg_basebackup --pgdata=/var/lib/postgresql/data/back -R --slot=replication_slot --host=db --port=5432
+      do
+      echo 'Waiting for primary to connect...'
+      sleep 1s
+      done
+      echo 'Backup done, starting replica...'
+      chmod 0700 /var/lib/postgresql/data/back
+      postgres
+      "
+    depends_on:
+      - db
+    volumes:
+      - db_replica_data:/var/lib/postgresql/data
+    networks:
+      - bot_network
+#    restart: unless-stopped
+networks:
+  bot_network:
+    driver: bridge
+volumes:
+  db_data:
+  db_replica_data:

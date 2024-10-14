@@ -1,0 +1,74 @@
+2024-10-09 23:14:11,037 - __main__ - ERROR - Error saving phone numbers: null value in column "id" of relation "phone" violates not-null constraint
+DETAIL:  Failing row contains (null, 8(910)123-45-67).
+
+2024-10-10 00:11:50,912 - telegram.ext.updater - ERROR - Error while getting Updates: urllib3 HTTPError ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2024-10-10 00:11:50,914 - telegram.ext.dispatcher - ERROR - No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\connectionpool.py", line 614, in urlopen
+    httplib_response = self._make_request(conn, method, url,
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\connectionpool.py", line 402, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 2, in raise_from
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\connectionpool.py", line 398, in _make_request
+    httplib_response = conn.getresponse()
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\http\client.py", line 1371, in getresponse
+    response.begin()
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\http\client.py", line 319, in begin
+    version, status, reason = self._read_status()
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\http\client.py", line 288, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+http.client.RemoteDisconnected: Remote end closed connection without response
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\utils\request.py", line 259, in _request_wrapper
+    resp = self._con_pool.request(*args, **kwargs)
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\request.py", line 68, in request
+    return self.request_encode_body(method, url, fields=fields,
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\request.py", line 148, in request_encode_body
+    return self.urlopen(method, url, **extra_kw)
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\poolmanager.py", line 244, in urlopen
+    response = conn.urlopen(method, u.request_uri, **kw)
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\connectionpool.py", line 665, in urlopen
+    retries = retries.increment(method, url, error=e, _pool=self,
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\util\retry.py", line 347, in increment
+    raise six.reraise(type(error), error, _stacktrace)
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\packages\six.py", line 685, in reraise
+    raise value.with_traceback(tb)
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\connectionpool.py", line 614, in urlopen
+    httplib_response = self._make_request(conn, method, url,
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\connectionpool.py", line 402, in _make_request
+    six.raise_from(e, None)
+  File "<string>", line 2, in raise_from
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\vendor\ptb_urllib3\urllib3\connectionpool.py", line 398, in _make_request
+    httplib_response = conn.getresponse()
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\http\client.py", line 1371, in getresponse
+    response.begin()
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\http\client.py", line 319, in begin
+    version, status, reason = self._read_status()
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\http\client.py", line 288, in _read_status
+    raise RemoteDisconnected("Remote end closed connection without"
+telegram.vendor.ptb_urllib3.urllib3.exceptions.ProtocolError: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\ext\updater.py", line 646, in _network_loop_retry
+    if not action_cb():
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\ext\updater.py", line 597, in polling_action_cb
+    updates = self.bot.get_updates(
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\ext\extbot.py", line 222, in get_updates
+    updates = super().get_updates(
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\bot.py", line 130, in decorator
+    result = func(*args, **kwargs)
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\bot.py", line 2861, in get_updates
+    self._post(
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\bot.py", line 295, in _post
+    return self.request.post(
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\utils\request.py", line 356, in post
+    result = self._request_wrapper(
+  File "C:\Users\Danil\AppData\Local\Programs\Python\Python39\lib\site-packages\telegram\utils\request.py", line 265, in _request_wrapper
+    raise NetworkError(f'urllib3 HTTPError {error}') from error
+telegram.error.NetworkError: urllib3 HTTPError ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2024-10-10 00:12:03,128 - telegram.vendor.ptb_urllib3.urllib3.connectionpool - WARNING - Retrying (Retry(total=2, connect=None, read=None, redirect=None)) after connection broken by 'NewConnectionError('<telegram.vendor.ptb_urllib3.urllib3.connection.VerifiedHTTPSConnection object at 0x0000018C8CF0CB50>: Failed to establish a new connection: [Errno 11001] getaddrinfo failed')': /bot7894832623:AAHU4bHsrABydQwVVPtbvRmFGug3hJJ00nc/getUpdates
