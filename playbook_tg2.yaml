@@ -1,0 +1,248 @@
+- name: Install python, requirements; git clone 
+  hosts: bot_server   
+  become: yes   
+
+  tasks: 
+    - name: Install packages
+      apt:
+        pkg:
+         - python3.11        
+         - pip
+         - git
+         - libpq-dev
+    - name: Clone repo for bot
+      git:
+        repo: https://github.com/KorolevskiyD/Devops_last.git
+        dest: /home/ansible/bot
+        single_branch: yes
+        version: bot
+    - name: Install requirements       
+      shell:
+        cmd: pip3 install -r /home/ansible/project/bot/bot/requirements.txt --break-system-packages
+        chdir: /home/ansible/bot
+    - name: Copy .env
+      copy:
+        src: ./.env
+        dest: /home/ansible/bot/.env
+        owner: ansible
+        group: ansible
+        mode: '0400'
+
+- name: Install psycopg2
+  hosts: replica_db    
+  become: yes
+
+  tasks: 
+    - name: Install packages
+      apt:
+        pkg:
+         - python3-psycopg2        
+
+
+- name: Install postgre, config replication
+  hosts: db_postgres
+  become: yes
+
+  tasks: 
+    - name: Install postgres
+      apt:
+        pkg:
+        - postgresql     
+        - postgresql-contrib
+    - name: Start postgres
+      systemd_service: 
+        state: started
+        name: postgresql
+
+- name: Add database 
+  hosts: bot_server
+  become: yes
+  vars_files:
+    - vars.yaml
+  tasks:
+
+    - name: Create database for bot
+      postgresql_db:
+        name: bot_database
+      become_user: postgres
+
+    - name: Create table(email_addresses) for bot
+      postgresql_table:
+        db: bot_database
+        name: email_addresses
+        columns:
+        - email_id SERIAL
+        - address VARCHAR(255)
+      become_user: postgres
+
+    - name: Create table(phone_numbers) for bot
+      postgresql_table:
+        db: bot_database
+        name: phone_numbers
+        columns:
+        - phone_id SERIAL
+        - number VARCHAR(18)
+      become_user: postgres
+
+    - name: Add bot user
+      postgresql_user:
+          name: "{{ bot_user }}"
+          password: "{{ bot_pass }}"
+      become_user: postgres
+
+    - name: Grant privileges
+      postgresql_privs:
+        database: bot_database
+        state: present
+        privs: SELECT,INSERT,UPDATE
+        type: table
+        obj: phone_numbers,email_addresses
+        role: userbot
+      become_user: postgres
+
+    - name: Grant privileges sequense
+      postgresql_privs:
+        database: bot_database
+        state: present
+        privs: USAGE,UPDATE
+        type: sequence
+        obj: email_addresses_email_id_seq,phone_numbers_phone_id_seq
+        role: userbot
+      become_user: postgres
+
+
+    - name: Insert query in database
+      postgresql_query:
+        db: bot_database
+        query: INSERT INTO email_addresses (address) VALUES ('korolevskiy-2002@mail.ru'),('positive-start@yandex.ru');
+      become_user: postgres
+
+- name: Configure replication (Master server)
+  hosts: bot_server
+  become: yes
+  vars_files:
+    - vars.yaml
+  tasks:
+
+    - name: mkdir /oracle/pg_data/archive/
+      file:
+        path: /oracle/pg_data/archive
+        state: directory
+        owner: postgres
+        group: postgres
+
+    - name: Add replication user
+      postgresql_user:
+          name: "{{ repl_user }}"
+          password: "{{ repl_pass }}"
+          role_attr_flags: REPLICATION
+      become_user: postgres
+
+    - name: Edit config file postgresql.conf(listen_addresses)
+      postgresql_set:
+        name: listen_addresses
+        value: "{{ listen_addresses_master }}"
+      become_user: postgres
+
+    - name: Edit config file pg_hba.conf(listen_addresses)
+      postgresql_pg_hba:
+        dest: /etc/postgresql/15/main/pg_hba.conf
+        contype: host
+        databases: replication
+        users: repl_user
+        source: "{{listen_addresses_master_pg}}"
+        method: scram-sha-256
+      become_user: postgres
+
+    - name: Edit config file pg_hba.conf(listen_addresses)
+      postgresql_pg_hba:
+        dest: /etc/postgresql/15/main/pg_hba.conf
+        contype: host
+        databases: all
+        users: all
+        source: "{{listen_addresses_master_pg}}"
+        method: scram-sha-256
+      become_user: postgres
+
+    - name: Edit config file postgresql.conf
+      postgresql_set:
+        name: archive_mode
+        value: on
+      become_user: postgres     
+
+    - name: Edit config file postgresql.conf(archive_command)
+      postgresql_set:
+        name: archive_command
+        value: 'cp %p /oracle/pg_data/archive/%f'
+      become_user: postgres
+
+    - name: Edit config file postgresql.conf(max_wal_senders)
+      postgresql_set:
+        name: max_wal_senders
+        value: 10
+      become_user: postgres
+
+    - name: Edit config file postgresql.conf(wal_level)
+      postgresql_set:
+        name: wal_level
+        value: replica
+      become_user: postgres
+
+    - name: Edit config file postgresql.conf(wal_log_hints)
+      postgresql_set:
+        name: wal_log_hints
+        value: on
+      become_user: postgres
+
+    - name: Edit config file postgresql.conf(log_replication_commands)
+      postgresql_set:
+        name: log_replication_commands
+        value: on
+      become_user: postgres
+
+    - name: Restart postgres(Master)
+      systemd_service: 
+        state: restarted
+        name: postgresql
+
+- name: Configure replication (slave server)
+  hosts: replica_db
+  become: yes
+  vars_files:
+    - vars.yaml
+  tasks:
+
+    - name: Edit config file postgresql.conf(listen_addresses)(Slave)
+      lineinfile:
+        state: present
+        path: /etc/postgresql/15/main/postgresql.conf
+        regexp: '#listen_addresses'
+        line: "listen_addresses = 'localhost, {{ master_ip_for_replication }}'"
+      become_user: postgres
+
+    - name: Stop postgres(Slave)
+      systemd_service: 
+        state: stopped
+        name: postgresql
+
+    - name: Delete directory var/lib/postgresql/15/main/*   
+      shell:
+        cmd: rm -rf /var/lib/postgresql/15/main/*
+
+    - name: Copy .pgpass
+      copy:
+        src: ./.pgpass
+        dest: /var/lib/postgresql/.pgpass
+        owner: postgres
+        group: postgres
+        mode: '0400'
+      become_user: postgres
+
+    - name: Start replication      
+      shell: pg_basebackup -R -h {{ master_ip_for_replication }} -U {{ repl_user }} -D /var/lib/postgresql/15/main -P
+      become_user: postgres
+
+    - name: Start postgres(Slave)
+      systemd_service: 
+        state: started
+        name: postgresql
